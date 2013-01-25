@@ -7,9 +7,11 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "DAPhotoView.h"
 
-@interface DAViewController : UIViewController
+@interface DAViewController : UIViewController <DAPhotoViewDataSource, DAPhotoViewDelegate>
 
+- (IBAction)viewPhoto:(id)sender;
 - (IBAction)viewPhotos:(id)sender;
 
 @end

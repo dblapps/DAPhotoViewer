@@ -74,16 +74,16 @@ static const CGFloat kMaxPinchScale = 20.0f;
 	self.layer.backgroundColor = [UIColor blackColor].CGColor;
 
 	mainLayer = [[CALayer alloc] init];
-	mainLayer.backgroundColor = [UIColor blackColor].CGColor;
+	mainLayer.backgroundColor = [UIColor clearColor].CGColor;
 	mainLayer.contentsGravity = kCAGravityResizeAspect;
 	[self.layer addSublayer:mainLayer];
 	
 	leftLayer = [[CALayer alloc] init];
-	leftLayer.backgroundColor = [UIColor blackColor].CGColor;
+	leftLayer.backgroundColor = [UIColor clearColor].CGColor;
 	leftLayer.contentsGravity = kCAGravityResizeAspect;
 	
 	rightLayer = [[CALayer alloc] init];
-	rightLayer.backgroundColor = [UIColor blackColor].CGColor;
+	rightLayer.backgroundColor = [UIColor clearColor].CGColor;
 	rightLayer.contentsGravity = kCAGravityResizeAspect;
 }
 
@@ -146,13 +146,21 @@ static const CGFloat kMaxPinchScale = 20.0f;
 	mainImageSize = (image == nil) ? CGSizeZero : image.size;
 	mainLayer.contents = (id)image.CGImage;
 	
-	image = [dataSource prevImageForPhotoView:self];
-	leftImageSize = (image == nil) ? CGSizeZero : image.size;
-	leftLayer.contents = (id)image.CGImage;
+	if ([(NSObject*)dataSource respondsToSelector:@selector(prevImageForPhotoView:)]) {
+		image = [dataSource prevImageForPhotoView:self];
+		leftImageSize = (image == nil) ? CGSizeZero : image.size;
+		leftLayer.contents = (id)image.CGImage;
+	} else {
+		leftImageSize = CGSizeZero;
+	}
 	
-	image = [dataSource nextImageForPhotoView:self];
-	rightImageSize = (image == nil) ? CGSizeZero : image.size;
-	rightLayer.contents = (id)image.CGImage;
+	if ([(NSObject*)dataSource respondsToSelector:@selector(nextImageForPhotoView:)]) {
+		image = [dataSource nextImageForPhotoView:self];
+		rightImageSize = (image == nil) ? CGSizeZero : image.size;
+		rightLayer.contents = (id)image.CGImage;
+	} else {
+		rightImageSize = CGSizeZero;
+	}
 
 	mainImageAspectSize = [self calculateImageAspectSize:mainImageSize];
 	leftImageAspectSize = [self calculateImageAspectSize:leftImageSize];
@@ -340,9 +348,9 @@ static const CGFloat kMaxPinchScale = 20.0f;
 {
 	if (flag) {
 		if (pagingDirection == -1) {
-			[delegate didPageLeft];
+			if ([(NSObject*)delegate respondsToSelector:@selector(didPageLeft)]) [delegate didPageLeft];
 		} else if (pagingDirection == 1) {
-			[delegate didPageRight];
+			if ([(NSObject*)delegate respondsToSelector:@selector(didPageRight)]) [delegate didPageRight];
 		}
 		pagingDirection = 0;
 		[CATransaction begin];
@@ -370,7 +378,7 @@ static const CGFloat kMaxPinchScale = 20.0f;
 	[CATransaction setValue:(id)kCFBooleanTrue forKey:kCATransactionDisableActions];
 
 	if (gestureState == UIGestureRecognizerStateBegan) {
-		[delegate hideHud];
+		if ([(NSObject*)delegate respondsToSelector:@selector(hideHud)]) [delegate hideHud];
 		[mainLayer removeAllAnimations];
 		[leftLayer removeAllAnimations];
 		[rightLayer removeAllAnimations];
@@ -382,7 +390,7 @@ static const CGFloat kMaxPinchScale = 20.0f;
 		gScaleCenter.x /= initialScale;
 		gScaleCenter.y /= initialScale;
 		gestureState = UIGestureRecognizerStateChanged;
-		[delegate gestureBegan];
+		if ([(NSObject*)delegate respondsToSelector:@selector(gestureBegan)]) [delegate gestureBegan];
 	}
 
 	// scaleActual is the actual scale value with which mainLayer will be transformed
@@ -525,26 +533,30 @@ static const CGFloat kMaxPinchScale = 20.0f;
 		CGFloat tgt_rx = tgt_mx + wd + (crw / 1.0f);
 		CGFloat tgt_ry = cry;
 		
-		if (((tgt_lx + (clw / 2.0f)) > kPageChangeThreshold) && (velocity.x > 0.0f)) {
-			tgt_mx = vw + (tgt_mw / 2.0f);
-			tgt_lx = vw / 2.0f;
-			animate = YES;
-			duration = 0.2f;
-			timing = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
-			animDelegate = self;
-			pagingDirection = -1;
-			[delegate willPageLeft];
+		if ((leftImageSize.width != 0.0f) && (leftImageSize.height != 0.0f)) {
+			if (((tgt_lx + (clw / 2.0f)) > kPageChangeThreshold) && (velocity.x > 0.0f)) {
+				tgt_mx = vw + (tgt_mw / 2.0f);
+				tgt_lx = vw / 2.0f;
+				animate = YES;
+				duration = 0.2f;
+				timing = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
+				animDelegate = self;
+				pagingDirection = -1;
+				if ([(NSObject*)delegate respondsToSelector:@selector(willPageLeft)]) [delegate willPageLeft];
+			}
 		}
 		
-		if (((tgt_rx - (crw / 2.0f)) < (vw - kPageChangeThreshold)) && (velocity.x < 0.0f)) {
-			tgt_mx = - (tgt_mw / 2.0f);
-			tgt_rx = vw / 2.0f;
-			animate = YES;
-			duration = 0.2f;
-			timing = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
-			animDelegate = self;
-			pagingDirection = 1;
-			[delegate willPageRight];
+		if ((rightImageSize.width != 0.0f) && (rightImageSize.height != 0.0f)) {
+			if (((tgt_rx - (crw / 2.0f)) < (vw - kPageChangeThreshold)) && (velocity.x < 0.0f)) {
+				tgt_mx = - (tgt_mw / 2.0f);
+				tgt_rx = vw / 2.0f;
+				animate = YES;
+				duration = 0.2f;
+				timing = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
+				animDelegate = self;
+				pagingDirection = 1;
+				if ([(NSObject*)delegate respondsToSelector:@selector(willPageRight)]) [delegate willPageRight];
+			}
 		}
 		
 		if (pagingDirection == 0) {
@@ -619,7 +631,7 @@ static const CGFloat kMaxPinchScale = 20.0f;
 		gScale = 1.0f;
 		gDelta = CGPointZero;
 		gScaleCenter = CGPointMake(self.bounds.size.width / 2.0f, self.bounds.size.height / 2.0f);
-		[delegate gestureEnded];
+		if ([(NSObject*)delegate respondsToSelector:@selector(gestureEnded)]) [delegate gestureEnded];
 	}
 }
 

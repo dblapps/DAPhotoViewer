@@ -11,7 +11,9 @@
 #import "DAPhoto.h"
 
 @interface DAViewController ()
-
+{
+	DAPhotoView* photoView;
+}
 @end
 
 @implementation DAViewController
@@ -19,13 +21,41 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	// Do any additional setup after loading the view, typically from a nib.
+	photoView = nil;
 }
 
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+}
+
+- (UIImage*) currentImageForPhotoView:(UIView*)photoView
+{
+	return [UIImage imageNamed:@"IMG_0534.jpg"];
+}
+
+- (void) toggleHud
+{
+	[UIView animateWithDuration:0.3f
+					 animations:^()
+						{
+							photoView.alpha = 0.0f;
+						}
+					 completion:^(BOOL finished)
+						{
+							[photoView removeFromSuperview];
+							photoView = nil;
+						}];
+}
+
+- (IBAction)viewPhoto:(id)sender
+{
+	photoView = [[DAPhotoView alloc] initWithFrame:self.view.bounds];
+	photoView.dataSource = self;
+	photoView.delegate = self;
+//	photoView = [UIColor clearColor];
+	[self.view addSubview:photoView];
+	[photoView reloadImages];
 }
 
 - (IBAction)viewPhotos:(id)sender

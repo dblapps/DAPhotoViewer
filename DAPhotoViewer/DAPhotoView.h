@@ -10,6 +10,7 @@
 
 
 @protocol DAPhotoViewDelegate
+@optional
 - (void) willPageLeft;
 - (void) didPageLeft;
 - (void) willPageRight;
@@ -26,6 +27,7 @@
 
 @protocol DAPhotoViewDataSource
 - (UIImage*) currentImageForPhotoView:(UIView*)photoView;
+@optional
 - (UIImage*) prevImageForPhotoView:(UIView*)photoView;
 - (UIImage*) nextImageForPhotoView:(UIView*)photoView;
 @end
