@@ -29,12 +29,7 @@
     [super didReceiveMemoryWarning];
 }
 
-- (UIImage*) currentImageForPhotoView:(UIView*)photoView
-{
-	return [UIImage imageNamed:@"IMG_0534.jpg"];
-}
-
-- (void) toggleHud
+- (void) closeImage
 {
 	[UIView animateWithDuration:0.3f
 					 animations:^()
@@ -51,11 +46,9 @@
 - (IBAction)viewPhoto:(id)sender
 {
 	photoView = [[DAPhotoView alloc] initWithFrame:self.view.bounds];
-	photoView.dataSource = self;
-	photoView.delegate = self;
-//	photoView = [UIColor clearColor];
+	photoView.sourceImage = [UIImage imageNamed:@"IMG_0534.jpg"];
 	[self.view addSubview:photoView];
-	[photoView reloadImages];
+	[photoView addTarget:self action:@selector(closeImage) forControlEvents:UIControlEventTouchUpInside];
 }
 
 - (IBAction)viewPhotos:(id)sender

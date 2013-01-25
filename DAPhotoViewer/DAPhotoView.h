@@ -33,7 +33,7 @@
 @end
 
 
-@interface DAPhotoView : UIView <UIGestureRecognizerDelegate>
+@interface DAPhotoView : UIControl <UIGestureRecognizerDelegate>
 {
 	CALayer *mainLayer;
 	CALayer *leftLayer;
@@ -57,11 +57,11 @@
 	NSTimeInterval touchStartTime;
 	
 	NSInteger pagingDirection; // -1 = left, 1 = right
-	
 }
 
 @property (assign) id<DAPhotoViewDelegate> delegate;
 @property (assign) id<DAPhotoViewDataSource> dataSource;
+@property (strong,nonatomic) UIImage* sourceImage;
 
 - (void) willDisappear;
 - (void) didAppear;

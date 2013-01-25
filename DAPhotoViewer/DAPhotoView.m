@@ -31,7 +31,10 @@ static const CGFloat kMaxScale = 4.0f;
 static const CGFloat kMaxPinchScale = 20.0f;
 
 
-@interface DAPhotoView (private)
+@interface DAPhotoView ()
+{
+	UIImage* _sourceImage;
+}
 - (CGSize) calculateImageAspectSize:(CGSize)size;
 - (CGAffineTransform) getCurLayerTransform:(CALayer*)l;
 - (void) handlePinch:(UIPinchGestureRecognizer *)pinch;
@@ -55,6 +58,7 @@ static const CGFloat kMaxPinchScale = 20.0f;
 	mainImageSize = CGSizeZero;
 	leftImageSize = CGSizeZero;
 	rightImageSize = CGSizeZero;
+	_sourceImage = nil;
 
 	mainImageAspectSize = [self calculateImageAspectSize:mainImageSize];
 	leftImageAspectSize = [self calculateImageAspectSize:leftImageSize];
@@ -135,6 +139,19 @@ static const CGFloat kMaxPinchScale = 20.0f;
 	[self.layer addSublayer:rightLayer];
 }
 
+- (UIImage*) sourceImage
+{
+	return _sourceImage;
+}
+
+- (void) setSourceImage:(UIImage *)sourceImage
+{
+	if (sourceImage != _sourceImage) {
+		_sourceImage = sourceImage;
+		[self reloadImages];
+	}
+}
+
 - (void) reloadImages
 {
 	UIImage *image;
@@ -142,23 +159,31 @@ static const CGFloat kMaxPinchScale = 20.0f;
 	[CATransaction begin];
 	[CATransaction setValue:(id)kCFBooleanTrue forKey:kCATransactionDisableActions];
 
-	image = [dataSource currentImageForPhotoView:self];
-	mainImageSize = (image == nil) ? CGSizeZero : image.size;
-	mainLayer.contents = (id)image.CGImage;
-	
-	if ([(NSObject*)dataSource respondsToSelector:@selector(prevImageForPhotoView:)]) {
-		image = [dataSource prevImageForPhotoView:self];
-		leftImageSize = (image == nil) ? CGSizeZero : image.size;
-		leftLayer.contents = (id)image.CGImage;
+	if (dataSource != nil) {
+		image = [dataSource currentImageForPhotoView:self];
+		mainImageSize = (image == nil) ? CGSizeZero : image.size;
+		mainLayer.contents = (id)image.CGImage;
+		
+		if ([(NSObject*)dataSource respondsToSelector:@selector(prevImageForPhotoView:)]) {
+			image = [dataSource prevImageForPhotoView:self];
+			leftImageSize = (image == nil) ? CGSizeZero : image.size;
+			leftLayer.contents = (id)image.CGImage;
+		} else {
+			leftImageSize = CGSizeZero;
+		}
+		
+		if ([(NSObject*)dataSource respondsToSelector:@selector(nextImageForPhotoView:)]) {
+			image = [dataSource nextImageForPhotoView:self];
+			rightImageSize = (image == nil) ? CGSizeZero : image.size;
+			rightLayer.contents = (id)image.CGImage;
+		} else {
+			rightImageSize = CGSizeZero;
+		}
 	} else {
+		image = _sourceImage;
+		mainImageSize = (image == nil) ? CGSizeZero : image.size;
+		mainLayer.contents = (id)image.CGImage;
 		leftImageSize = CGSizeZero;
-	}
-	
-	if ([(NSObject*)dataSource respondsToSelector:@selector(nextImageForPhotoView:)]) {
-		image = [dataSource nextImageForPhotoView:self];
-		rightImageSize = (image == nil) ? CGSizeZero : image.size;
-		rightLayer.contents = (id)image.CGImage;
-	} else {
 		rightImageSize = CGSizeZero;
 	}
 
@@ -744,7 +769,13 @@ static const CGFloat kMaxPinchScale = 20.0f;
 		if ((touchTime - touchStartTime) > 0.3f) {
 			return;
 		}
-		[(NSObject*)delegate performSelector:@selector(toggleHud) withObject:nil afterDelay:0.3f];
+		if (delegate != nil) {
+			if ([(NSObject*)delegate respondsToSelector:@selector(toggleHud)]) {
+				[(NSObject*)delegate performSelector:@selector(toggleHud) withObject:nil afterDelay:0.3f];
+			}
+		} else {
+			[self sendActionsForControlEvents:UIControlEventTouchUpInside];
+		}
 	} else {
 		[NSObject cancelPreviousPerformRequestsWithTarget:delegate selector:@selector(toggleHud) object:nil];
 		[self toggleZoom:[[touches anyObject] locationInView:self]];
