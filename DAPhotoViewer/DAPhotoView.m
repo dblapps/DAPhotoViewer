@@ -149,6 +149,10 @@ static const CGFloat kMaxPinchScale = 20.0f;
 	if (sourceImage != _sourceImage) {
 		_sourceImage = sourceImage;
 		[self reloadImages];
+		[mainLayer removeAllAnimations];
+		[leftLayer removeAllAnimations];
+		[rightLayer removeAllAnimations];
+		mainLayer.transform = CATransform3DIdentity;
 	}
 }
 
